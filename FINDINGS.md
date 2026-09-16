@@ -1,189 +1,97 @@
-# Target Leakage in METABRIC Breast-Cancer Survival Prediction: A Documented Case Study and Correction
+# Target Leakage in METABRIC Breast Cancer Survival Prediction: Reconstruction and Corrected Analysis
 
-**Enoch Ewusi Hagan** · Reconstructed and corrected analysis, August 2026
-Published to this repository in September 2026. Not peer reviewed.
-
----
+Enoch Ewusi Hagan, FRSS. Analysis carried out in 2026 and published to this repository in September 2026. Not peer reviewed.
 
 ## Summary
 
-An MSc dissertation (University of Stirling, 2024) predicting overall survival in
-breast-cancer patients from the METABRIC cohort reported ROC-AUC up to 0.93 and
-concluded that integrating genomic data "significantly improves" prediction.
-Examiner feedback identified a critical flaw: variables derived from the outcome
-itself had been used as predictors. This work reconstructs the pipeline from the
-original code, removes the leakage, implements the censoring-aware survival
-methodology the dissertation had proposed but not delivered, and re-evaluates the
-central claim about genomic value.
+My MSc dissertation (University of Stirling, 2024) predicted overall survival in breast cancer patients from the METABRIC cohort. It reported ROC-AUC up to 0.93 and concluded that adding genomic data significantly improved prediction. My examiner pointed out a serious flaw: some predictors had been derived from the outcome itself. In this work I rebuilt the pipeline from the original code, removed the leakage, fitted the survival models the dissertation had proposed but not implemented, and re-tested the claim about genomic data.
 
-The corrected results tell a different story. Once outcome-derived variables are
-removed, gradient-boosted classification of survival status reaches ROC-AUC ≈ 0.76,
-Cox and random-survival-forest models reach a concordance index of ≈ 0.68–0.69, and
-adding ~490 mRNA-expression features to the corrected clinical model showed **no
-improvement** in either metric in this evaluation; both were marginally lower. The
-headline conclusion of the original dissertation does not hold under this corrected,
-unregularised comparison.
+With the outcome-derived variables removed, gradient boosting reached a ROC-AUC of about 0.76. Cox and random survival forest models reached C-indices of about 0.68 and 0.69. Adding around 490 mRNA expression features to the corrected clinical model did not improve either metric in this evaluation, and both were slightly lower. The dissertation's main conclusion does not hold under this corrected, unregularised comparison.
 
+## What was done in 2024 and what was done in 2026
 
-## Provenance: what is 2024 work and what is 2026 work
+**The 2024 dissertation, as submitted.** It applied random forests, gradient boosting, support vector machines, logistic regression and neural networks to METABRIC, reported ROC-AUC up to 0.93, and concluded that multi-omics integration improved performance. Its feature set included outcome-derived variables. Its aims mentioned Cox models, random survival forests and the concordance index, but it contained no survival model results. The target leakage was identified in examiner feedback; I did not find it myself.
 
-This distinction matters for reading the results, and is stated explicitly to avoid
-any ambiguity.
+**This repository (2026).** I rebuilt the pipeline from the original code, measured the effect of the leakage, fitted the survival models, tested the genomic claim on paired folds and checked calibration. None of the survival analysis, genomic comparison or calibration work existed in the submitted dissertation or in the recovered notebook.
 
-**The 2024 MSc dissertation (University of Stirling), as submitted**, applied
-supervised classification (random forests, gradient boosting, SVM, logistic
-regression, neural networks) to the METABRIC cohort and reported ROC-AUC up to 0.93,
-concluding that multi-omics integration improved performance. Its feature set
-included outcome-derived variables. It proposed Cox models, random survival forests
-and concordance-index evaluation in its aims, but no survival-model results appear in
-it. **Examiner feedback on that dissertation identified the target leakage.** The
-author did not identify it independently.
+The work has not been peer reviewed and is not a preprint. Every figure below is produced by the code in `src/`.
 
-**This repository is 2026 work.** It reconstructs the pipeline from the original
-code, quantifies the leakage effect, implements the censoring-aware survival models
-the dissertation had only proposed, tests the genomic claim on paired folds, and
-assesses calibration. The survival analysis, the genomic comparison and the
-calibration assessment did not exist in the submitted dissertation or in the
-recovered notebook.
+## The data and how the leakage happened
 
-**Status:** internal research work. Not published, not peer reviewed, not deposited
-as a preprint. All figures here are regenerated by the code in `src/`, not
-transcribed from earlier records.
+The METABRIC file has 1,904 patients. It includes a binary outcome, `overall_survival` (1 = alive at last follow-up, 0 = died), a follow-up time, `overall_survival_months`, and a vital status field, `death_from_cancer`, with the values "Living", "Died of Disease" and "Died of Other Causes". The recovered notebook used `overall_survival_months` as a predictor (feature list at cell 18), and an earlier feature importance analysis also included `death_from_cancer`, which came out as the most important predictor.
 
-## Background and the leakage mechanism
+Both variables are functions of the outcome:
 
-The METABRIC file contains 1,904 patients, a binary `overall_survival` outcome
-(1 = living at last follow-up, 0 = died), a continuous `overall_survival_months`
-follow-up time, and a categorical `death_from_cancer` vital-status field
-("Living" / "Died of Disease" / "Died of Other Causes"). The original pipeline
-(recovered notebook, feature list at cell 18) used `overall_survival_months` as a
-model input, and an earlier feature-importance analysis additionally included
-`death_from_cancer` — the model's most "important" predictor.
+- `death_from_cancer == "Living"` means the same thing as `overall_survival == 1`. In this data they match exactly (the share of "Living" among survivors is 1.000), so including it more or less gives the model the answer.
+- `overall_survival_months` is follow-up time. Patients who died and patients who survived have systematically different follow-up, so this variable carries a lot of information about the label.
 
-Both are functions of the outcome:
-
-- `death_from_cancer == "Living"` is definitionally equivalent to
-  `overall_survival == 1`. In this data the correspondence is exact (share of
-  "Living" among survivors = 1.000). Feeding it to the model is close to handing it
-  the answer.
-- `overall_survival_months` is follow-up time; because deaths and survivors have
-  systematically different follow-up, it strongly encodes the label.
-
-Using either as a predictor inflates apparent performance without any genuine
-prognostic signal — the classic definition of **target leakage**.
+Using either as a predictor raises apparent performance without adding any real prognostic information. That is target leakage.
 
 ## Method
 
-All evaluation uses stratified (classification) or standard (survival) 5-fold
-cross-validation with a fixed seed. Imputation (median / most-frequent), one-hot
-encoding, and scaling are fitted **inside each training fold** and applied to the
-held-out fold, so there is no preprocessing leakage and no information crosses the
-split. Three predictor sets are compared under otherwise identical modelling:
+Classification models were evaluated with stratified 5-fold cross-validation and survival models with standard 5-fold cross-validation, all with a fixed seed (42). Imputation (median or most frequent), one-hot encoding and scaling were fitted on each training fold only and then applied to the held-out fold, so no information passed between training and test data. Three predictor sets were compared using otherwise identical models:
 
-- **A — full leak:** clinical + `overall_survival_months` + `death_from_cancer`
-  (reconstruction of the submitted dissertation's configuration).
-- **B — partial leak:** clinical + `overall_survival_months` (state of the recovered
-  notebook).
-- **C — corrected:** clinical predictors only; every outcome-derived field removed.
+- Set A, full leak: clinical predictors plus `overall_survival_months` and `death_from_cancer`, reconstructing the submitted configuration.
+- Set B, partial leak: clinical predictors plus `overall_survival_months`, matching the recovered notebook.
+- Set C, corrected: clinical predictors only, with every outcome-derived field removed.
 
-Survival models (Cox PH, penalised; Random Survival Forest) use event =
-died-of-any-cause, duration = `overall_survival_months`, evaluated by Harrell's
-concordance index. The genomic-value test compares corrected clinical predictors
-against corrected clinical + all mRNA z-score columns on identical paired folds,
-for both the GB classifier (AUC) and RSF (C-index). Full code in `src/`.
+The survival models (an L2-penalised Cox model and a random survival forest) used death from any cause as the event and `overall_survival_months` as the duration, and were evaluated with Harrell's concordance index. The genomic test compared the corrected clinical predictors with the same predictors plus all mRNA z-score columns, on identical paired folds, using gradient boosting (AUC) and a random survival forest (C-index). The code is in `src/`.
 
 ## Results
 
-**1. The leakage fully explains the original performance.** Gradient-boosted
-classification, 5-fold CV ROC-AUC:
+### 1. Leakage accounts for the high reported performance
 
-| Predictor set | GB ROC-AUC |
+Gradient boosting, 5-fold cross-validated ROC-AUC:
+
+| Predictor set | ROC-AUC |
 |---|---|
-| A — full leak (months + vital status) | **≈1.00** (0.9995) |
-| B — partial leak (months only) | 0.862 |
-| C — corrected (clinical only) | **0.762** |
+| A, full leak (follow-up time and vital status) | 0.9995 (about 1.00) |
+| B, partial leak (follow-up time only) | 0.862 |
+| C, corrected (clinical only) | 0.762 |
 
-With both leaked variables present the problem becomes very close to trivial (AUC 0.9995, i.e. ≈1.00);
-`overall_survival_months` alone still lifts AUC to 0.86; the honest clinical-only
-model sits at 0.76. The dissertation's reported 0.93 lies between the two leaked
-configurations, consistent with a leaked pipeline.
+With both leaked variables included, the task becomes almost trivial. Follow-up time on its own still raises the AUC to 0.86, while the clinical-only model reaches 0.76. The 0.93 reported in the dissertation falls between the two leaked configurations, which is what you would expect from a leaked pipeline.
 
-**2. Honest survival models are moderate, as expected for clinical predictors.**
-Corrected, censoring-aware models over 1,903 patients (1,102 events): Cox PH
-C-index **0.679 ± 0.011**; Random Survival Forest **0.694 ± 0.016**. These are
-credible values for clinical-variable breast-cancer survival models and align with
-the classification result.
+### 2. The corrected survival models perform moderately
 
-**3. No improvement from genomic features was demonstrated once leakage was removed.** Paired
-5-fold comparison, corrected features:
+On 1,903 patients with 1,102 events, the Cox model reached a C-index of 0.679 ± 0.011 and the random survival forest 0.694 ± 0.016. These are reasonable values for breast cancer survival models based on clinical variables, and they are consistent with the classification result.
 
-| Metric | Clinical only | Clinical + mRNA (~490 features) | Paired difference |
+### 3. No improvement from genomic features was demonstrated
+
+Paired 5-fold comparison with corrected features:
+
+| Metric | Clinical only | Clinical + mRNA (489 features) | Paired difference |
 |---|---|---|---|
-| GB ROC-AUC | 0.763 ± 0.019 | 0.743 ± 0.011 | **−0.019 ± 0.015** |
-| RSF C-index | 0.690 ± 0.017 | 0.679 ± 0.013 | **−0.011 ± 0.008** |
+| Gradient boosting ROC-AUC | 0.763 ± 0.019 | 0.743 ± 0.011 | −0.019 ± 0.015 |
+| Random survival forest C-index | 0.690 ± 0.017 | 0.679 ± 0.013 | −0.011 ± 0.008 |
 
-The difference is negative in almost every fold — adding high-dimensional mRNA data
-slightly reduced discrimination in this evaluation, the opposite of the
-dissertation's claim that multi-omics integration "significantly improves"
-performance. The difference is small and is summarised across five paired folds
-without a formal significance test, so it is reported as an absence of
-demonstrated improvement rather than as evidence of no predictive value. This is the expected
-behaviour when a few hundred noisy features are added to a strong low-dimensional
-clinical signal without dimensionality reduction or regularised feature selection.
+Adding the mRNA features lowered discrimination slightly in almost every fold, which is the opposite of the dissertation's conclusion. The difference is small, and it is summarised over five paired folds without a formal significance test, so it should be read as a lack of demonstrated improvement and not as evidence that genomic data have no predictive value. This pattern is common when several hundred noisy features are added to a strong low-dimensional clinical signal without dimension reduction or regularised feature selection.
 
-**4. Calibration.** The corrected GB classifier's out-of-fold Brier score is 0.193;
-a calibration table is stored in `results/survival_analysis.json` for future
-recalibration work.
+### 4. Calibration
+
+The corrected gradient boosting classifier has an out-of-fold Brier score of 0.193. A ten-bin calibration table is saved in `results/survival_analysis.json` for later recalibration work.
 
 ## Interpretation
 
-The original dissertation's central empirical claim was an artefact of target
-leakage, not evidence about genomics. Corrected, the case study demonstrates three
-things that generalise well beyond this dataset:
+The dissertation's main result came from target leakage and says nothing reliable about the value of genomic data. The corrected analysis points to three lessons that apply beyond this dataset:
 
-1. **Outcome-derived predictors can manufacture near-perfect apparent
-   performance** (AUC ≈1.00 here), which is why leakage audits belong in every
-   clinical-ML evaluation.
-2. **The reported-versus-real performance gap is large and quantifiable** (0.93 → 0.76),
-   giving a concrete measure of how much leakage inflated the result.
-3. **Added data modalities must be shown to help against a leakage-free baseline**;
-   here, genomic features did not — see Limitations, since no genomic feature
-   selection or regularisation was applied.
+1. Outcome-derived predictors can produce almost perfect apparent performance (AUC about 1.00 here), so clinical prediction studies should check for leakage as a matter of routine.
+2. The gap between reported and corrected performance can be large and can be measured directly (0.93 against 0.76 here).
+3. A new data source should be shown to help against a leakage-free baseline. Here, the genomic features did not, although no feature selection or regularisation was applied (see Limitations).
 
 ## Limitations and next steps
 
-**No formal statistical test of the genomic comparison.** The clinical vs
-clinical+mRNA difference is reported as a mean and standard deviation across five
-paired cross-validation folds. No paired significance test or bootstrap confidence
-interval was computed, so the correct reading is "no improvement was demonstrated in
-this evaluation", not "genomic features have no predictive value". Adding a paired
-test or bootstrap CI is the first item of further work.
+**No formal test of the genomic comparison.** The difference between the clinical and clinical plus mRNA models is reported as a mean and standard deviation over five paired folds. I did not run a paired significance test or compute a bootstrap confidence interval, so the correct reading is that no improvement was demonstrated in this evaluation. Adding such a test is the first piece of further work.
 
-**No genomic feature selection or regularisation.** ~490 mRNA features were added
-raw to a strong low-dimensional clinical signal. A penalised model (e.g.
-elastic-net Cox) or a dimension-reduced representation might recover value, and
-should be tested before the genomic result is generalised at all.
+**No genomic feature selection or regularisation.** Around 490 mRNA features were added directly to a strong clinical signal. A penalised model, such as an elastic-net Cox model, or a dimension-reduced representation might recover some value, and should be tried before drawing any wider conclusion about genomic data.
 
-**Reconstruction, not replication of a survival section.** The recovered notebook
-contained no survival modelling; the Cox and RSF analyses here are new work built to
-the dissertation's stated intent rather than a re-run of prior code.
+**The survival analysis is new work.** The recovered notebook had no survival modelling. The Cox and random survival forest analyses were built to match what the dissertation said it would do; they are not a re-run of earlier code.
 
-**Evaluation scope.** Discrimination and a single Brier score are reported. Time-
-dependent AUC, integrated Brier score, competing-risks treatment and decision-curve
-or clinical-utility analysis would all strengthen the survival evaluation.
+**Limited evaluation.** Only discrimination and a single Brier score are reported. Time-dependent AUC, the integrated Brier score, competing risks and decision curve analysis would all make the survival evaluation stronger.
 
-**Single cohort, single split scheme.** Results come from METABRIC alone under one
-5-fold scheme with a fixed seed; repeated cross-validation would tighten variance
-estimates, and external validation on an independent cohort (e.g. SEER, TCGA-BRCA)
-is the natural extension.
+**One cohort and one split scheme.** All results come from METABRIC under a single 5-fold scheme with a fixed seed. Repeated cross-validation would give tighter variance estimates, and validation on an independent cohort (for example SEER or TCGA-BRCA) is the obvious next step.
 
-**What the limitations do not change.** The leakage itself is documented in the
-original work and identified in examiner feedback; the size of the inflation is
-directly measurable here by comparing otherwise identical pipelines.
+**What the limitations do not change.** The leakage is present in the original work and was identified in examiner feedback, and its effect can be measured directly by comparing otherwise identical pipelines.
 
 ## Reproducibility
 
-`bash run_all.sh` regenerates every number above from
-`data/METABRIC_RNA_Mutation.csv`. Environment pinned in `requirements.txt`
-(scikit-learn 1.9.0, scikit-survival 0.28.0, lifelines 0.30.3). All metrics in this
-document were produced by the code in `src/`, not transcribed from memory.
+`bash run_all.sh` regenerates every number above from `data/METABRIC_RNA_Mutation.csv`. Package versions are pinned in `requirements.txt` (scikit-learn 1.9.0, scikit-survival 0.28.0, lifelines 0.30.3). All figures in this document come from the code in `src/`.

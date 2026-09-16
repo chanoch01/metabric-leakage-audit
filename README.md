@@ -6,19 +6,19 @@
 
 ## Purpose
 
-This project reconstructs and audits an earlier breast cancer survival prediction analysis. It measures how much outcome-derived information and evaluation design changed the reported predictive performance, and it rebuilds the analysis with leakage removed and censoring handled properly.
+This project rebuilds and audits the breast cancer survival analysis from my MSc dissertation. It measures how much outcome-derived variables and evaluation choices changed the reported performance, and it redoes the analysis with the leakage removed and censoring handled properly.
 
 ## Background
 
 My 2024 MSc dissertation (University of Stirling) used the METABRIC cohort to predict overall survival. As submitted, it reported ROC-AUC up to 0.93 and concluded that adding genomic data improved prediction. Its predictors included variables derived from the outcome itself, and it listed Cox models and random survival forests in its aims without implementing them.
 
-**Examiner feedback on the dissertation identified the target leakage.** I did not identify it independently.
+Examiner feedback on the dissertation identified the target leakage. I did not find it myself.
 
-This repository is separate 2026 work. The reconstruction, the leakage experiments, the survival models, the genomic comparison and the calibration assessment were all built in 2026 and were not part of the submitted dissertation. The dissertation is the starting material, not a co-claim of these results.
+Everything in this repository was done in 2026 as separate work. The reconstruction, leakage experiments, survival models, genomic comparison and calibration check were not part of the submitted dissertation.
 
 ## What this repository does
 
-Every modelling comparison below uses the same preprocessing and models, changing only the predictor set.
+Each comparison uses the same preprocessing and models and changes only the set of predictors.
 
 - **Full leakage experiment (set A):** clinical predictors plus `overall_survival_months` and `death_from_cancer`, reconstructing the submitted configuration.
 - **Partial leakage experiment (set B):** clinical predictors plus `overall_survival_months` only.
@@ -35,7 +35,7 @@ All figures come from the JSON files in `results/`, produced by the code in `src
 | Analysis | Result |
 |---|---|
 | Patients / events (survival analysis) | 1,903 / 1,102 |
-| Set A, full leak: gradient boosting ROC-AUC | 0.9995 (≈ 1.00) |
+| Set A, full leak: gradient boosting ROC-AUC | 0.9995 (about 1.00) |
 | Set B, partial leak: gradient boosting ROC-AUC | 0.862 |
 | Set C, corrected: gradient boosting ROC-AUC | 0.762 |
 | Cox proportional hazards C-index | 0.679 ± 0.011 |
@@ -46,7 +46,7 @@ All figures come from the JSON files in `results/`, produced by the code in `src
 
 A note on patient counts: the classification stage uses 1,904 patients. The survival and genomic stages drop one patient whose vital status is missing, leaving 1,903.
 
-**Genomic result, read carefully:** no improvement was demonstrated in this particular unregularised evaluation. The mRNA features were added without feature selection or regularisation, and the five paired folds were not given a formal significance test. This does not show that genomic data has no predictive value.
+On the genomic result: no improvement was demonstrated in this particular unregularised evaluation. The mRNA features were added without feature selection or regularisation, and the five paired folds were not given a formal significance test. This does not show that genomic data have no predictive value.
 
 The full write-up, including the leakage mechanism and the limitations, is in [`FINDINGS.md`](FINDINGS.md).
 
@@ -81,7 +81,7 @@ Outputs are written to `results/`: `classification_audit.json`, `survival_analys
 
 ## Dataset
 
-The raw METABRIC data is **not included** in this repository. See [`data/README.md`](data/README.md) for the expected file and its columns.
+The raw METABRIC data are not included in this repository. See [`data/README.md`](data/README.md) for the expected file and its columns.
 
 The file used is `METABRIC_RNA_Mutation.csv` (1,904 patients, clinical fields, mRNA z-scores and mutation status), commonly distributed on Kaggle as "Breast Cancer Gene Expression Profiles (METABRIC)". It derives from the METABRIC study on cBioPortal (https://www.cbioportal.org/study/summary?id=brca_metabric). Original studies: Curtis et al. (2012), *Nature*; Pereira et al. (2016), *Nature Communications*. Check the terms of whichever source you use before sharing the data.
 
@@ -119,4 +119,4 @@ No code logic, results or scientific conclusions were changed. The following was
 - README restructured, with the status line, research questions, Python version and future work added.
 - README previously listed a `genomic_value_test.json` output that `run_all.sh` does not produce; that reference was removed.
 - `run_all.sh` now clears `results/genomic_folds.jsonl` before the per-fold loop. The fold runner appends, so re-running without this would duplicate folds.
-- One results heading in `FINDINGS.md` was reworded so it matches the qualified genomic conclusion already stated in its own text and limitations.
+- `FINDINGS.md` was rewritten in plainer language, and one results heading was changed to match the qualified genomic conclusion. No figures changed.
