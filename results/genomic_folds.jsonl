@@ -1,0 +1,5 @@
+{"fold": 0, "n_mrna": 489, "clinical": {"auc": 0.7769904009034443, "cindex": 0.7145764587326365}, "clinical_plus_mrna": {"auc": 0.7328345567476002, "cindex": 0.7011598727499061}}
+{"fold": 1, "n_mrna": 489, "clinical": {"auc": 0.7459558823529412, "cindex": 0.6704811912539832}, "clinical_plus_mrna": {"auc": 0.7413744343891402, "cindex": 0.6726456500390805}}
+{"fold": 2, "n_mrna": 489, "clinical": {"auc": 0.7354072398190045, "cindex": 0.6917112082928409}, "clinical_plus_mrna": {"auc": 0.7311085972850679, "cindex": 0.6814463880790411}}
+{"fold": 3, "n_mrna": 489, "clinical": {"auc": 0.7859375000000001, "cindex": 0.7009819511807267}, "clinical_plus_mrna": {"auc": 0.7611931818181819, "cindex": 0.678560069968991}}
+{"fold": 4, "n_mrna": 489, "clinical": {"auc": 0.7684659090909091, "cindex": 0.6712945212390273}, "clinical_plus_mrna": {"auc": 0.7498011363636363, "cindex": 0.6613459792150136}}

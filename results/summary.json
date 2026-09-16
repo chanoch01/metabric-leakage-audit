@@ -1,0 +1,36 @@
+{
+  "outcome_integrity": {
+    "share_Living_when_overall_survival_1": 1.0,
+    "event_vs_overall_survival_consistency": 1.0,
+    "n": 1903,
+    "events": 1102
+  },
+  "classification_auc_gb": {
+    "A_full_leak": 0.9995475113122172,
+    "B_partial_leak": 0.8618999713521772,
+    "C_corrected": 0.7621733321026799
+  },
+  "survival_cindex": {
+    "cox": 0.6794369032775192,
+    "rsf": 0.6938103051265739
+  },
+  "genomic_value": {
+    "auc": {
+      "clinical_mean": 0.7625513864332599,
+      "clinical_sd": 0.018987324592951885,
+      "plus_mrna_mean": 0.7432623813207252,
+      "plus_mrna_sd": 0.011173963122549984,
+      "paired_diff_mean": -0.019289005112534507,
+      "paired_diff_sd": 0.014761659786634187
+    },
+    "cindex": {
+      "clinical_mean": 0.6898090661398429,
+      "clinical_sd": 0.017077648323117256,
+      "plus_mrna_mean": 0.6790315920104065,
+      "plus_mrna_sd": 0.013032847243672053,
+      "paired_diff_mean": -0.010777474129436481,
+      "paired_diff_sd": 0.007886706507908205
+    }
+  },
+  "calibration_brier_gb_corrected": 0.19328062855294337
+}
