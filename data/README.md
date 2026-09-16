@@ -9,8 +9,8 @@ commonly distributed via Kaggle ("Breast Cancer Gene Expression Profiles
 (METABRIC)") and derives from cBioPortal's METABRIC study
 (Curtis et al., 2012, *Nature*; Pereira et al., 2016, *Nature Communications*).
 
-**The CSV is intentionally not committed** — confirm redistribution terms of your
-source before sharing. Download it from your source and place it at
+The CSV is deliberately not included. Check the redistribution terms of your
+source before sharing it. Download it from your source and place it at
 `data/METABRIC_RNA_Mutation.csv`.
 
 ## Columns used
@@ -19,7 +19,7 @@ source before sharing. Download it from your source and place it at
 - Excluded as outcome-derived (leakage): `overall_survival_months`,
   `death_from_cancer`.
 - Corrected clinical predictors: 26 fields (demographics, tumour characteristics,
-  receptor status, treatment, NPI, stage, grade, integrative cluster, etc.) — see
+  receptor status, treatment, NPI, stage, grade, integrative cluster and so on); see
   `CLINICAL_CORRECTED` in `src/01_classification_audit.py`.
 - Genomic-value test adds all mRNA z-score columns (~490 numeric gene columns,
   excluding `*_mut` mutation-status columns).
