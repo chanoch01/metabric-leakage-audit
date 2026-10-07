@@ -2,7 +2,7 @@
 
 **Status:** published to this repository in September 2026. Not peer reviewed. This is not a published paper and not a preprint.
 
-**Author:** Enoch Ewusi Hagan (FRSS)
+**Author:** Enoch Ewusi Hagan
 
 ## Purpose
 
