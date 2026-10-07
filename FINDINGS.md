@@ -1,6 +1,6 @@
 # Target Leakage in METABRIC Breast Cancer Survival Prediction: Reconstruction and Corrected Analysis
 
-Enoch Ewusi Hagan, FRSS. Analysis carried out in 2026 and published to this repository in September 2026. Not peer reviewed.
+Enoch Ewusi Hagan. Analysis carried out in 2026 and published to this repository in September 2026. Not peer reviewed.
 
 ## Summary
 
